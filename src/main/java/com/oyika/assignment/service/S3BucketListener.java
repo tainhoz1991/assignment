@@ -2,6 +2,7 @@ package com.oyika.assignment.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.oyika.assignment.dto.ImageDTO;
 import com.oyika.assignment.model.Image;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,11 +29,11 @@ public class S3BucketListener {
     @SqsListener("${sqs.queue.name}")
     public void process(String payload, @Headers Map<String, Object> payloadHeaders) {
         logger.info("Incoming order payload {} with headers {}", payload, payloadHeaders);
-        List<Image> imgs = getNewImageInfoFromSQSEvent(payload);
+        List<ImageDTO> imgs = getNewImageInfoFromSQSEvent(payload);
         imageService.processImage(imgs);
     }
 
-    private List<Image> getNewImageInfoFromSQSEvent(String event) {
+    private List<ImageDTO> getNewImageInfoFromSQSEvent(String event) {
         ObjectMapper objectMapper = new ObjectMapper();
         S3EventNotification s3Event = null;
         try {
@@ -45,7 +46,7 @@ public class S3BucketListener {
         List<S3EventNotificationRecord> records = s3Event.getRecords();
         //Assume event has only one record
         if (records.isEmpty()) return null;
-        List<Image> result = new ArrayList<>();
+        List<ImageDTO> result = new ArrayList<>();
         for (S3EventNotificationRecord r : records) {
 
             // only process create object event
@@ -64,7 +65,7 @@ public class S3BucketListener {
                     .append(region)
                     .append(".amazonaws.com/")
                     .append(fileName);
-            Image img = new Image();
+            ImageDTO img = new ImageDTO();
             img.setBucketName(bucketName);
             img.setFilePath(builder.toString());
             img.setEtag(etag);
