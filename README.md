@@ -15,10 +15,60 @@ The bucket is constantly updated with new image. Write an efficient logic to upd
 4. SQS
 
 ## System Design
-Because of the scope of topic, so that I just have built a simple service with these above feature, and skip perform authenticate and authorized user access API.
-I exposed two APIs include: 
-  1. "/api/v1.0/images/sync" -> to sync all the items in the specific bucket store down database.
-  2. "/api/v1.0/images" -> to fetch all the images.
 
-I also create a listener to listen when the bucket hava an event and will send message (include information of event) to application, and we will store it down database.
+Due to homework scope is creating microservice to handle image from S3 bucket, I ignored the Gateway layer and just focus
+on design and develop image service, the system design is as below:
+
 ![](system-design.png)
+
+Step 1: Create a S3 bucket
+
+![](docs/1.create_bucket.png)
+
+Step 2: Create a SQS queue
+
+![](docs/2.create_queue.png)
+
+And modify queue policy to alow S3 bucket push event to this queue
+
+![](docs/3.queue_policy.png)
+
+Step 4: Back to S3 bucket, and add notification event to SQS queue, I only choose 2 event types: ObjectCreated:Put and ObjectCreated:Post
+
+![](docs/4.s3_event_noti.png)
+
+![](docs/5.file_created_event_type.png)
+
+![](docs/6.choose_queue.png)
+
+Update application config:
+Open application.properties file, then change database account and AWS pair key:
+```
+# MySql
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+spring.datasource.url=jdbc:mysql://localhost:3306/oyika
+spring.datasource.username=root
+spring.datasource.password=*******
+
+# Spring Cloud AWS
+cloud.aws.credentials.access-key=<your-access-key>
+cloud.aws.credentials.secret-key=<your-secret-key>
+cloud.aws.region.static=<your-region>
+cloud.aws.stack.auto=false
+sqs.queue.name=<your-queue-name>
+s3.bucket_name=<your-bucket-name>
+```
+
+
+To run the application:
+
+```shell
+cd <project_root>
+./mvnw spring-boot:run
+```
+
+API Endpoints:
+
+* Get list images: GET localhost:8080/api/v1.0/images
+
+* Scan S3 bucket and update to database: GET localhost:8080/api/v1.0/images/scan
