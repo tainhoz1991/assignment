@@ -15,8 +15,10 @@ The bucket is constantly updated with new image. Write an efficient logic to upd
 4. SQS
 
 ## System Design
-Do phạm vi của đề bài là develop miroservice để xử lý file trên S3 bucket,
-vậy nên tôi xin phép bỏ qua layer authentication và authorization để tập trung
-vào xử lý file.
+Because of the scope of topic, so that I just have built a simple service with these above feature, and skip perform authenticate and authorized user access API.
+I exposed two APIs include: 
+  1. "/api/v1.0/images/sync" -> to sync all the items in the specific bucket store down database.
+  2. "/api/v1.0/images" -> to fetch all the images.
 
+I also create a listener to listen when the bucket hava an event and will send message (include information of event) to application, and we will store it down database.
 ![](system-design.png)
